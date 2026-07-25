@@ -5,21 +5,23 @@ import './App.css'
 function App() {
   const[city, setcity]=useState("");
   const[country, setcountry]=useState("");
-  const[temp,settemp]=useState("");
+  const[temp,settemp]=useState(null);
   const[unit,setunit]=useState("");
+  const[forecasts,setforecasts]=useState([]);
+  const[icons, seticons]=useState("");
+  
+  
 
   const apikey=import.meta.env.VITE_API_KEY;
-  console.log(unit);
    
   const checkcurrentweather=async()=>{
     try{
       
       const response= await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&appid=${apikey}&units=${unit}`);
        console.log(response);
-       console.log(response.data.main)
-       settemp(response.data.main.temp);
-       console.log(temp);
-
+       const weatherdata=response.data.weather[0].icon
+       seticons(weatherdata);
+       settemp(response.data);
     }
     catch(err){
       console.log("Error"+err);
@@ -27,14 +29,17 @@ function App() {
     }
   }
 
-  const  forecast=()=>{
+  const  forecast=async()=>{
     try {
       const response= await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${city},${country}&appid=${apikey}&units=${unit}`);
        console.log(response);
-      
-      
+       const days= response.data.list.filter((e)=>{
+             return e.dt_txt.includes("12:00:00");
+       });
+       setforecasts(days);
+       console.log(days)
     } catch (error) {
-      console.log("Error"+err);
+      console.log("Error"+error);
     }
   }
 
@@ -50,13 +55,40 @@ function App() {
       <select name="units" id="units" onChange={(e)=>{setunit(e.target.value)}}>
         <option value="metric">Celsius</option>
         <option value="imperial">Fahrenheit</option>
-        <option value="kelvin">kelvin</option>
+        <option value="">kelvin</option>
       </select>
       <button onClick={checkcurrentweather}>Check current Weather</button>
       <button onClick={forecast}>forecast</button>
       <div>
         <h1>Results</h1>
-        <p>{temp}</p>
+
+        {temp &&(
+            <div >
+              <img src={`https://openweathermap.org/img/wn/${icons}@2x.png`} alt="weather icon" />
+              <p>Country:{temp.sys.country}</p>
+              <p>Temperature:{temp.main.temp}</p>
+              <p>Feels-like:{temp.main.feels_like}</p>
+              <p>Humidity:{temp.main.humidity}</p>
+             <p>Wind speed:{temp.wind.speed}</p>
+             <p>Weather description:{temp.weather[0].description}</p>
+             
+
+            </div>
+          )
+        }
+
+        {forecasts.map((e)=>{
+          return(
+         <div key={e.dt}>
+
+          <p>{e.dt_txt}</p>
+           <p>{"Temperature"+e.main.temp}</p>
+           <p>{"Feels-like"+e.main.feels_like}</p>
+           <p>{""+e.main.humidity}</p>
+         </div>
+          )
+        })}
+        
       </div>
       </div>   
     </>
